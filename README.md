@@ -5,8 +5,9 @@ two minutes you get a structured, sourced briefing to read before the meeting.
 
 Built for a founder called **Priya**, who runs a D2C startup and meets 3–4 investors a week.
 
-- **Live URL:** _(filled in after deployment)_
-- **Components Map:** `/components-map` on the live site, and [`docs/components-map.md`](docs/components-map.md)
+- **Live URL:** **https://investor-brief-agent.vercel.app**
+- **Components Map:** **https://investor-brief-agent.vercel.app/components-map** (also in [`docs/components-map.md`](docs/components-map.md))
+- **GitHub:** https://github.com/anshutolasaria/investor-brief-agent
 - **Plain-English walkthrough:** [`docs/EXPLAIN.md`](docs/EXPLAIN.md)
 
 ---
