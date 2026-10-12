@@ -46,6 +46,10 @@ No database, no authentication, no other services.
 
 ## How it works
 
+![Components Map](docs/components-map.png)
+
+The same diagram in Mermaid:
+
 ```mermaid
 flowchart TD
     U["Priya - Founder<br/>Browser"]

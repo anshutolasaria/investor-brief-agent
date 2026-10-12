@@ -3,6 +3,10 @@
 How a single request flows through the Pre-Meeting Investor Brief agent.
 Every arrow is labelled with the data that travels along it.
 
+![Components Map](components-map.png)
+
+The same diagram in Mermaid, for anyone who wants to edit it:
+
 ```mermaid
 flowchart TD
     U["Priya - Founder<br/>Browser"]
