@@ -26,13 +26,15 @@ export type ActivityItem = {
   headline: string;
   date: string;
   description: string;
-  sourceUrl: string;
+  /** Which numbered source backs this up. The real URL is looked up from that number. */
+  sourceNumber: number;
 };
 
-/** A single claim with the link that backs it up. */
+/** A single claim plus the number of the source that backs it up. */
 export type Claim = {
   point: string;
-  sourceUrl: string;
+  /** Which numbered source backs this up. The real URL is looked up from that number. */
+  sourceNumber: number;
 };
 
 /** One conversation opener for Priya to use in the meeting. */

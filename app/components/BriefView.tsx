@@ -25,10 +25,13 @@ function briefToText(data: BriefResponse, investorName: string, firmName: string
   lines.push(brief.summary);
   lines.push("");
 
+  // Looks up the real URL for a source number. Returns "" if the number is unknown.
+  const urlFor = (n: number) => sources.find((s) => s.number === n)?.url ?? "";
+
   lines.push("1. RECENT PORTFOLIO ACTIVITY (last 90 days)");
   lines.push(brief.recentActivity.note);
   for (const item of brief.recentActivity.items) {
-    lines.push(`- [${item.date}] ${item.headline}: ${item.description} (${item.sourceUrl})`);
+    lines.push(`- [${item.date}] ${item.headline}: ${item.description} (${urlFor(item.sourceNumber)})`);
   }
   lines.push("");
 
@@ -36,14 +39,14 @@ function briefToText(data: BriefResponse, investorName: string, firmName: string
   lines.push(`Sectors: ${brief.investmentThesis.sectors.join(", ") || "not stated in sources"}`);
   lines.push(`Stages: ${brief.investmentThesis.stages.join(", ") || "not stated in sources"}`);
   for (const belief of brief.investmentThesis.beliefs) {
-    lines.push(`- ${belief.point} (${belief.sourceUrl})`);
+    lines.push(`- ${belief.point} (${urlFor(belief.sourceNumber)})`);
   }
   lines.push("");
 
   lines.push("3. CONTEXT & RED FLAGS");
   lines.push(brief.contextAndRedFlags.note);
   for (const item of brief.contextAndRedFlags.items) {
-    lines.push(`- ${item.point} (${item.sourceUrl})`);
+    lines.push(`- ${item.point} (${urlFor(item.sourceNumber)})`);
   }
   lines.push("");
 
@@ -66,19 +69,45 @@ function briefToText(data: BriefResponse, investorName: string, firmName: string
   return lines.join("\n");
 }
 
+/**
+ * Older fallback for copying: put the text in a hidden textarea, select it, and use
+ * the old copy command. Needed because some browsers block the modern clipboard API.
+ * Returns true if the copy worked.
+ */
+function copyUsingHiddenTextarea(text: string): boolean {
+  try {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    const worked = document.execCommand("copy");
+    document.body.removeChild(area);
+    return worked;
+  } catch {
+    return false;
+  }
+}
+
 export default function BriefView({ data, investorName, firmName }: Props) {
   const { brief, sources } = data;
-  const [copied, setCopied] = useState(false);
+  // "idle" normally, "copied" after a success, "failed" if the browser blocked us.
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
-  // Copies the plain-text brief to the clipboard and shows "Copied!" for 2 seconds.
+  // Copies the plain-text brief, trying the modern API first and the old one second.
   async function handleCopy() {
+    const text = briefToText(data, investorName, firmName);
+
     try {
-      await navigator.clipboard.writeText(briefToText(data, investorName, firmName));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(text);
+      setCopyState("copied");
     } catch {
-      alert("Your browser blocked clipboard access. Please select the text and copy it manually.");
+      setCopyState(copyUsingHiddenTextarea(text) ? "copied" : "failed");
     }
+
+    // Go back to the normal label after a few seconds.
+    setTimeout(() => setCopyState("idle"), 2500);
   }
 
   // The browser's own print dialog. Choosing "Save as PDF" there gives a PDF,
@@ -113,13 +142,20 @@ export default function BriefView({ data, investorName, firmName }: Props) {
             </p>
           </div>
 
-          <div className="no-print flex gap-2">
-            <button type="button" onClick={handleCopy} className={buttonClass}>
-              {copied ? "Copied!" : "Copy brief"}
-            </button>
-            <button type="button" onClick={handlePrint} className={buttonClass}>
-              Download as PDF
-            </button>
+          <div className="no-print flex flex-col items-end gap-1">
+            <div className="flex gap-2">
+              <button type="button" onClick={handleCopy} className={buttonClass}>
+                {copyState === "copied" ? "Copied!" : "Copy brief"}
+              </button>
+              <button type="button" onClick={handlePrint} className={buttonClass}>
+                Download as PDF
+              </button>
+            </div>
+            {copyState === "failed" && (
+              <p className="text-xs text-red-700">
+                Your browser blocked copying. Select the text and press Ctrl+C.
+              </p>
+            )}
           </div>
         </div>
 
@@ -149,7 +185,7 @@ export default function BriefView({ data, investorName, firmName }: Props) {
                 <p className="mt-0.5 text-xs font-medium text-zinc-500">{item.date}</p>
                 <p className="mt-1.5 text-sm leading-relaxed text-zinc-700">{item.description}</p>
                 <div className="mt-1.5">
-                  <SourceLink url={item.sourceUrl} />
+                  <SourceLink sources={sources} number={item.sourceNumber} />
                 </div>
               </li>
             ))}
@@ -198,7 +234,7 @@ export default function BriefView({ data, investorName, firmName }: Props) {
         <ul className="space-y-3">
           {brief.investmentThesis.beliefs.map((belief, i) => (
             <li key={i} className="text-sm leading-relaxed text-zinc-700">
-              {belief.point} <SourceLink url={belief.sourceUrl} />
+              {belief.point} <SourceLink sources={sources} number={belief.sourceNumber} />
             </li>
           ))}
         </ul>
@@ -216,7 +252,7 @@ export default function BriefView({ data, investorName, firmName }: Props) {
           <ul className="space-y-3">
             {brief.contextAndRedFlags.items.map((item, i) => (
               <li key={i} className="text-sm leading-relaxed text-zinc-700">
-                {item.point} <SourceLink url={item.sourceUrl} />
+                {item.point} <SourceLink sources={sources} number={item.sourceNumber} />
               </li>
             ))}
           </ul>

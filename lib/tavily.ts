@@ -42,6 +42,20 @@ export function toDateString(date: Date): string {
 }
 
 /**
+ * Turns Tavily's published_date into a plain "YYYY-MM-DD" string.
+ * Tavily sends dates in the long form "Mon, 28 Sep 2026 21:29:18 GMT", so we
+ * cannot just cut the first 10 characters - that would give "Mon, 28 S".
+ * Letting Date parse it handles both that form and a plain "2026-09-28".
+ * Returns null when there is no date, or when it cannot be understood.
+ */
+export function normaliseDate(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return toDateString(parsed);
+}
+
+/**
  * Builds the 5 search queries we run in parallel.
  * Two look for recent news; three look for background material.
  */
@@ -155,7 +169,7 @@ export async function searchAll(
       number: sources.length + 1, // numbering starts at 1
       title,
       url,
-      publishedDate: result.published_date ? result.published_date.slice(0, 10) : null,
+      publishedDate: normaliseDate(result.published_date),
       // Trim long snippets so the prompt we send to Gemini stays a reasonable size.
       content: (result.content ?? "").slice(0, 1200),
     });

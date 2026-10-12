@@ -203,7 +203,11 @@ Five layers, which is the part worth understanding:
    date. A model has no reliable idea what "today" is, so without this the 90-day rule
    cannot work. The prompt also says to drop any item whose date is missing or older
    than the cutoff.
-4. **Every claim must carry a source URL** copied character-for-character from the list.
+4. **The model never writes a URL at all.** Each claim carries only a source *number*
+   (`"sourceNumber": 3`), and the app looks the real URL up from the Tavily results. This
+   was added after testing: the model once re-typed a long URL and silently dropped a word
+   from it, producing a dead link. A number cannot be mangled that way, and a number that
+   does not exist simply renders no link instead of a broken one.
 5. **The Sources list shown to the user is built from the real Tavily results in the API
    route, not from the model's output.** Even if the model were to invent a URL inside a
    claim, the bibliography at the bottom of the page stays genuine.

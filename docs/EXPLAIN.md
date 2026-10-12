@@ -60,6 +60,12 @@ to 1200 characters so the prompt stays a reasonable size.
 investor and firm, Priya's startup profile, eight hard rules, and the numbered source
 list.
 
+**Step 6b — Note what the model is NOT asked to do.**
+It is never asked to write a URL. Each claim carries only a source *number*, and the app
+looks the real URL up from that number. This came out of testing: the model once retyped
+a long URL and quietly dropped a word from the middle, producing a link that 404s. A
+number cannot be corrupted that way.
+
 **Step 7 — Gemini Flash writes the brief.**
 `lib/gemini.ts` calls Google's official SDK. The important part is `response_format`: it
 carries a **JSON schema**, which is a description of the exact shape the answer must
@@ -104,7 +110,8 @@ The rules are the anti-hallucination layer, so they are worth reading closely.
 - `GEMINI_MODEL = "gemini-3.8-flash"` — the model name, in one constant, exactly as the
   assignment asked, so swapping models is a one-line change.
 - `BRIEF_SCHEMA` — the JSON schema. Each section is listed in `required`, so the model
-  cannot skip one.
+  cannot skip one. Note `sourceNumber` is an `integer`, not a URL string: the model picks
+  a number from the list and the app resolves it to the real link.
 - `generateBrief()` — creates the client, calls `ai.interactions.create(...)` with the
   schema, reads `interaction.output_text`, and `JSON.parse`s it. Both failure modes
   (empty response, unparseable text) throw a clear message.
@@ -140,11 +147,17 @@ timer would keep running after the component disappears.
 
 ### `app/components/BriefView.tsx`
 Renders the four sections. `briefToText()` flattens the brief into plain text for the
-"Copy brief" button. `handlePrint()` just calls `window.print()`.
+"Copy brief" button, using `urlFor()` to turn each source number back into a real URL.
+`handleCopy()` tries the modern clipboard API first and falls back to a hidden textarea
+with the older copy command, because some browsers block the modern one; if both fail it
+shows a small inline message rather than an alert box. `handlePrint()` calls
+`window.print()`.
 
 ### `app/components/SectionCard.tsx` and `SourceLink.tsx`
 Two tiny reusable pieces: the white card with a numbered heading, and the small
-domain-name link shown under each claim.
+`[3] domain.com` link shown under each claim. `SourceLink` takes the source list plus a
+number and finds the matching source itself. If the number does not exist it renders
+nothing, so a bad citation can never become a broken link.
 
 ### `app/globals.css`
 Tailwind plus a `@media print` block. `.no-print` hides the form and buttons when
@@ -171,10 +184,15 @@ snippets in one call, so there is no HTML scraping to write.
 **2. How do you stop the model from hallucinating?**
 Five layers. The model only sees text Tavily fetched seconds ago. The prompt forbids
 outside knowledge and forbids inventing dates, numbers or quotes. Today's date and the
-90-day cutoff are passed in explicitly. Every claim must carry a URL copied from the
-source list. And the Sources list shown on screen is built in the API route from the
-real Tavily results, not from the model's output — so even a fabricated URL inside a
-claim cannot corrupt the bibliography.
+90-day cutoff are passed in explicitly. The model never writes a URL at all - it
+cites a source *number*, and the app resolves that number to the real link, so a URL
+cannot be mangled or invented. And the Sources list shown on screen is built in the API
+route from the real Tavily results, not from the model's output.
+
+(Worth knowing for the viva: the number-instead-of-URL design was not the first version.
+The first version asked for the URL directly, and testing caught the model dropping a
+word out of a long link. That is a good example of why you test the output rather than
+trusting it.)
 
 **3. Why pass today's date into the prompt?**
 A language model has no reliable sense of what today is. Without being told, it cannot
@@ -236,3 +254,38 @@ interests to her specific situation.
 | "Add a field to the brief" | Add it to `BRIEF_SCHEMA` in `lib/gemini.ts`, to `Brief` in `lib/types.ts`, and render it in `BriefView.tsx`. |
 | "Tighten the rules" | The numbered rules in `lib/prompt.ts`. |
 | "More search results each" | `MAX_RESULTS_PER_QUERY` in `lib/tavily.ts`. |
+
+---
+
+## 6. Two real bugs that testing caught
+
+Worth knowing, because an examiner may ask "how do you know it actually works?"
+
+**Bug 1 — the dates were being cut into nonsense.**
+Tavily does not return dates as `2026-09-28`. It returns them as
+`Mon, 28 Sep 2026 21:29:18 GMT`. The first version of `lib/tavily.ts` just took the first
+ten characters, which produced `"Mon, 28 S"`. That string is not a date, so the whole
+90-day rule would have been running on garbage. The fix is `normaliseDate()`, which lets
+`Date` parse the value properly and handles both formats plus missing or unreadable dates.
+
+**Bug 2 — the model mangled a long URL.**
+In the first test run, Gemini cited a Business Wire link but dropped the word "Build" out
+of the middle of it, giving a link that would 404. It was not inventing a source; it was
+retyping a long string and slipping. The fix was to stop asking for URLs altogether and
+ask for a source *number* instead, which the app resolves. See section 2, step 6b.
+
+**What was also tested:**
+
+| Test | Result |
+| --- | --- |
+| Well-known investor (Fred Wilson, USV) | Full brief, 0 dates outside the 90-day window |
+| Mid-level investor (Anirudh Damani, Artha) | High confidence, very specific talking points |
+| Lesser-known investor (Vaibhav Domkundwar, Better Capital) | Solid brief, medium confidence |
+| Investor with thin recent news (Sanjay Mehta, 100X.VC) | Honestly reported "nothing in the last 90 days", low confidence |
+| **A completely made-up investor** | **Invented nothing**: empty sections, low confidence, and talking points that became honest discovery questions |
+| Empty / overlong / malformed input | Friendly 400 messages |
+| Missing API key | Friendly 500 naming the missing variable |
+| Wrong Tavily key / wrong Gemini key | Friendly 502 for each, no crash |
+
+The made-up-investor test is the important one. It is the direct evidence that the app
+reports what it found rather than what sounds plausible.

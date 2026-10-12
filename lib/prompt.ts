@@ -52,15 +52,20 @@ RULES YOU MUST FOLLOW
    older than ${cutoffString}, DO NOT list it as recent activity.
 4. If you find no qualifying recent activity, set "found" to false, leave "items" empty,
    and write an honest one-line explanation in "note". Do not guess to fill space.
-5. Every factual claim must carry the exact URL of the source it came from, copied
-   character-for-character from the list below. Never make up a URL.
-6. The three talking points must connect this investor's ACTUAL stated interests
+5. Every factual claim must carry the NUMBER of the source it came from, as a plain
+   number. Source [3] means "sourceNumber": 3. Never write out a URL anywhere: the app
+   already holds the real URL for each number and will attach it for you. Only use
+   numbers that actually appear in the list below.
+6. Do NOT write bracket markers like [3] or [10, 12] inside any piece of text. The app
+   adds the source link itself from the "sourceNumber" field. Text fields such as
+   "summary", "sectors" and "point" must read as clean prose with no citation markers.
+7. The three talking points must connect this investor's ACTUAL stated interests
    (from the sources) to Priya's sector (${input.startupSector}) and stage
    (${input.startupStage}). Each should be something she can say out loud in the first
    two minutes of the meeting.
-7. Be honest about thin data. If this investor is not well covered by the sources, say so
+8. Be honest about thin data. If this investor is not well covered by the sources, say so
    plainly in "confidenceNote" and set "dataConfidence" to "low".
-8. Write in clear, plain English. No marketing language.
+9. Write in clear, plain English. No marketing language.
 
 NUMBERED SOURCES (live web and news results fetched today)
 ${sources.length > 0 ? formatSources(sources) : "(No sources were found.)"}

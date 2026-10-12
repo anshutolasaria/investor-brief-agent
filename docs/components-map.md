@@ -38,7 +38,8 @@ flowchart TD
    startup profile go into one prompt. The call also carries a **JSON schema**, so
    Gemini must return exactly the structure the frontend expects.
 6. **Gemini Flash → API route.** A JSON object with the four required sections, a
-   confidence rating, and a source URL attached to each factual claim.
+   confidence rating, and a source *number* attached to each factual claim. The app turns
+   that number into the real URL, so the model never writes a link itself.
 7. **API route → Frontend.** The brief, the numbered source list (built from the real
    Tavily results, not from the model) and the generation time in seconds.
 8. **Frontend → Priya.** Four section cards, a clickable Sources list, and the
