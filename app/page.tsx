@@ -25,6 +25,37 @@ const DEFAULT_FORM: BriefRequest = {
 /** Where the startup profile is kept in the browser. */
 const PROFILE_KEY = "investor-brief:startup-profile";
 
+/** One-click examples, so the app is not a blank box on first visit. */
+const EXAMPLES = [
+  { investorName: "Fred Wilson", firmName: "Union Square Ventures" },
+  { investorName: "Anirudh Damani", firmName: "Artha Venture Fund" },
+  { investorName: "Vaibhav Domkundwar", firmName: "Better Capital" },
+];
+
+/** What the finished brief contains. Shown before the first search. */
+const SECTIONS_PREVIEW = [
+  {
+    step: "1",
+    title: "Recent Portfolio Activity",
+    text: "New investments and exits from the last 90 days, with dates and source links.",
+  },
+  {
+    step: "2",
+    title: "Investment Thesis",
+    text: "The sectors, stages and beliefs they state publicly, in their own words.",
+  },
+  {
+    step: "3",
+    title: "Context & Red Flags",
+    text: "Controversies, pivots, and sectors they have quietly moved away from.",
+  },
+  {
+    step: "4",
+    title: "Three Talking Points",
+    text: "Openers that connect their real interests to your sector and stage.",
+  },
+];
+
 export default function HomePage() {
   const [form, setForm] = useState<BriefRequest>(DEFAULT_FORM);
   const [isLoading, setIsLoading] = useState(false);
@@ -75,6 +106,12 @@ export default function HomePage() {
     rememberProfile(values);
   }
 
+  /** Fills the investor and firm from one of the example buttons. */
+  function fillFromExample(example: { investorName: string; firmName: string }) {
+    setForm((current) => ({ ...current, ...example }));
+    setError(null);
+  }
+
   async function handleGenerate() {
     // Basic check in the browser before we bother the server.
     if (!form.investorName.trim() || !form.firmName.trim()) {
@@ -114,20 +151,37 @@ export default function HomePage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-14">
       {/* --- Page header --- */}
-      <header className="no-print mb-7">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/10">
-          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+      <header className="no-print mb-7 text-center sm:mb-9">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-indigo-700 shadow-sm ring-1 ring-inset ring-indigo-600/15 backdrop-blur">
+          <span className="relative flex h-1.5 w-1.5">
+            {/* A gentle pulsing dot, to suggest "live". */}
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-500" />
+          </span>
           Live web search + Gemini Flash
         </div>
 
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
-          Pre-Meeting Investor Brief
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-5xl">
+          Walk in knowing
+          <br className="hidden sm:block" />{" "}
+          <span className="bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
+            who you are pitching
+          </span>
         </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-600 sm:text-base">
-          Enter an investor and their firm. You get a sourced briefing — their recent deals,
-          what they say they invest in, the red flags, and three openers tailored to your
-          startup — in under two minutes.
+
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-zinc-600 sm:text-base">
+          Enter an investor and their firm. Get a sourced briefing — recent deals, what they
+          say they invest in, the red flags, and three openers tailored to your startup.
         </p>
+
+        {/* Three small facts that set expectations before the first search. */}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-zinc-500">
+          <span>Under 2 minutes</span>
+          <span className="h-3 w-px bg-zinc-300" aria-hidden="true" />
+          <span>Last 90 days of activity</span>
+          <span className="h-3 w-px bg-zinc-300" aria-hidden="true" />
+          <span>Every claim linked to a source</span>
+        </div>
       </header>
 
       {/* --- The form --- */}
@@ -139,6 +193,24 @@ export default function HomePage() {
           isLoading={isLoading}
         />
       </div>
+
+      {/* --- Example buttons, so the page is never a blank box --- */}
+      {!result && !isLoading && (
+        <div className="no-print mb-6 flex flex-wrap items-center justify-center gap-2">
+          <span className="text-xs text-zinc-500">Try an example:</span>
+          {EXAMPLES.map((example) => (
+            <button
+              key={example.investorName}
+              type="button"
+              onClick={() => fillFromExample(example)}
+              className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:border-indigo-300 hover:text-indigo-700"
+            >
+              {example.investorName}
+              <span className="text-zinc-400"> · {example.firmName}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* --- Error message, if any --- */}
       {error && (
@@ -162,6 +234,37 @@ export default function HomePage() {
           investorName={shownFor.investorName}
           firmName={shownFor.firmName}
         />
+      )}
+
+      {/* --- What the brief contains. Only before the first search. --- */}
+      {!result && !isLoading && !error && (
+        <section className="no-print mt-10">
+          <h2 className="mb-4 text-center text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            What you get
+          </h2>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {SECTIONS_PREVIEW.map((section) => (
+              <div
+                key={section.step}
+                className="rounded-xl border border-zinc-200/70 bg-white/70 p-4 transition hover:border-indigo-200 hover:bg-white"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-xs font-bold text-indigo-600">
+                    {section.step}
+                  </span>
+                  <h3 className="text-sm font-semibold text-zinc-900">{section.title}</h3>
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-600">{section.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4 text-center text-xs leading-relaxed text-zinc-500">
+            Plus a numbered source list, and an honest confidence rating when the web has
+            little to say about an investor.
+          </p>
+        </section>
       )}
 
       {/* --- Footer --- */}
