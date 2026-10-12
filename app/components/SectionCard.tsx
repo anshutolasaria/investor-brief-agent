@@ -1,27 +1,35 @@
-// A plain white card with a title. Every section of the brief sits inside one of these,
-// so the whole page looks consistent and prints nicely.
+// A white card with a numbered heading. Every section of the brief sits inside one,
+// so the page looks consistent and prints cleanly.
 
 import type { ReactNode } from "react";
 
 type Props = {
-  /** The small number shown in the circle, e.g. "1". */
+  /** The number shown in the badge, e.g. "1". Leave out for an unnumbered card. */
   step?: string;
   title: string;
+  /** Optional small grey line under the title. */
+  hint?: string;
   children: ReactNode;
 };
 
-export default function SectionCard({ step, title, children }: Props) {
+export default function SectionCard({ step, title, hint, children }: Props) {
   return (
-    <section className="print-card rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
-      <h2 className="mb-4 flex items-center gap-3 text-lg font-semibold text-zinc-900">
+    <section className="print-card overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm ring-1 ring-black/[0.02]">
+      <header className="flex items-start gap-3 border-b border-zinc-100 px-5 py-4 sm:px-6">
         {step && (
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-sm font-semibold text-white">
+          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-sm font-semibold text-white">
             {step}
           </span>
         )}
-        {title}
-      </h2>
-      {children}
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold tracking-tight text-zinc-900 sm:text-lg">
+            {title}
+          </h2>
+          {hint && <p className="mt-0.5 text-xs text-zinc-500">{hint}</p>}
+        </div>
+      </header>
+
+      <div className="px-5 py-5 sm:px-6">{children}</div>
     </section>
   );
 }

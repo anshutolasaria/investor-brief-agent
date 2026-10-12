@@ -221,11 +221,19 @@ honest, short brief rather than an impressive, invented one.
 ### Why the startup profile fields?
 
 The problem statement describes Priya as a D2C founder but never gives her sector,
-stage or product. Talking point 4 has to be *tailored to her startup's stage and
-sector*, so the app has to know them. Rather than hard-coding guesses, the form asks
-for three fields and pre-fills them with a sensible D2C example
-(sector "D2C / Consumer brands", stage "Seed") that stays fully editable. This also
-makes the app useful to any founder, not only to Priya.
+stage or product. Section 4 has to be *tailored to her startup's stage and sector*, so
+the app has to know them — otherwise the openers come out generic, which defeats the
+point of the section. Rather than hard-coding guesses, the app asks for three fields and
+pre-fills a sensible D2C example (sector "D2C / Consumer brands", stage "Seed") that
+stays fully editable.
+
+**Where they live in the UI matters too.** The case study says Priya *"enters an
+investor's name and firm"* — that is the search, and those are the only two inputs on the
+form. Her own startup does not change between meetings, so it sits in a collapsed "Your
+startup" strip that shows the current values at a glance, opens with one click, and is
+saved to `localStorage` so she sets it once rather than re-typing it for all 3–4 meetings
+a week. Nothing is hidden: the strip always displays the sector and stage being used.
+If storage is blocked, the defaults are used and nothing breaks.
 
 ### Why `window.print()` instead of a PDF library?
 

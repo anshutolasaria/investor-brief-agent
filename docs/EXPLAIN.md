@@ -135,9 +135,20 @@ holds the form values, the loading flag, the error message and the result. `show
 remembers which investor the displayed brief is about, so the heading stays correct even
 if Priya starts typing a new name.
 
+It also saves the startup profile to `localStorage` whenever it changes, and loads it
+back in a `useEffect` on mount. It has to be an effect rather than the initial `useState`
+value, because `localStorage` does not exist on the server - reading it during the first
+render would make the server HTML and the browser HTML disagree, which React calls a
+hydration mismatch. Every read and write is wrapped in `try/catch`, so a browser with
+storage blocked simply falls back to the defaults.
+
 ### `app/components/BriefForm.tsx`
 The form. `setField()` updates one field while copying the rest, which is the standard
 React pattern for editing an object in state. Every input is disabled while loading.
+
+Only the investor and the firm are on the main form, because that is the actual search.
+The startup profile sits below in a section that is collapsed by default (`profileOpen`
+state) and shows the current sector and stage in its header, so nothing is hidden.
 
 ### `app/components/LoadingProgress.tsx`
 A `setInterval` ticks once a second. The message shown is the last one whose `after`
@@ -236,12 +247,15 @@ PDF" is a standard destination. A `@media print` block in `globals.css` hides th
 and buttons, flattens the cards, and prints the real URL after each link. Zero
 dependencies.
 
-**10. Why does the form ask about Priya's own startup?**
-Because section 4 must be *tailored to her stage and sector*, and the problem statement
-never specifies them. The app asks for sector, stage and a one-line description, and
-pre-fills a sensible D2C example that stays editable. Those three values go into the
-prompt, which is what lets the talking points connect the investor's actual stated
-interests to her specific situation.
+**10. Why does the form ask about Priya's own startup? Isn't the search just the investor?**
+Both are true, and the design reflects that. The case study requires section 4 to be
+*"tailored to Priya's startup's stage and sector"* but never states them, so the app has
+to know them or the openers come out generic - which would defeat the whole section. But
+the case study also says she *"enters an investor's name and firm"*, so those are the only
+two inputs on the search form. Her startup does not change between meetings, so it lives
+in a collapsed strip that shows the current sector and stage, opens with one click, and is
+remembered in `localStorage`. She sets it once, not once per meeting. Nothing is hidden,
+and if storage is blocked the defaults are used.
 
 ---
 

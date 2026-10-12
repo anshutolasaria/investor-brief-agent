@@ -1,17 +1,18 @@
 "use client";
 
-// The home page. It holds the form values, calls POST /api/brief,
-// and then shows either a loading state, an error, or the finished brief.
+// The home page. It holds the form values, calls POST /api/brief, and then shows
+// either a loading state, an error, or the finished brief.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import BriefForm from "./components/BriefForm";
 import BriefView from "./components/BriefView";
 import LoadingProgress from "./components/LoadingProgress";
 import type { BriefRequest, BriefResponse } from "@/lib/types";
 
-// Priya's startup is not described in the assignment, so we pre-fill a sensible
-// D2C example. She can edit any of it; it is what makes the talking points specific.
+// The case study says Priya runs a D2C startup but never gives her sector or stage,
+// and the talking points must be tailored to both. So we pre-fill a sensible D2C
+// example that she can edit; it is saved in her browser so she sets it only once.
 const DEFAULT_FORM: BriefRequest = {
   investorName: "",
   firmName: "",
@@ -19,6 +20,9 @@ const DEFAULT_FORM: BriefRequest = {
   startupStage: "Seed",
   startupDescription: "A direct-to-consumer skincare brand selling online across India.",
 };
+
+/** Where the startup profile is kept in the browser. */
+const PROFILE_KEY = "investor-brief:startup-profile";
 
 export default function HomePage() {
   const [form, setForm] = useState<BriefRequest>(DEFAULT_FORM);
@@ -29,6 +33,46 @@ export default function HomePage() {
   // Remember who the brief was about, so the heading stays correct even if the
   // user starts typing a new name into the form.
   const [shownFor, setShownFor] = useState({ investorName: "", firmName: "" });
+
+  // Load the saved startup profile once, after the page appears in the browser.
+  // This has to happen in an effect rather than in useState: localStorage does not
+  // exist on the server, and reading it during the first render would make the
+  // server HTML and the browser HTML disagree (a "hydration mismatch").
+  // The lint rule below normally warns about setState in an effect; restoring saved
+  // data on mount is the accepted exception, and it runs once because the
+  // dependency list is empty.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(PROFILE_KEY);
+      if (!saved) return;
+      const profile = JSON.parse(saved);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring saved profile on mount
+      setForm((current) => ({ ...current, ...profile }));
+    } catch {
+      // A browser with storage blocked just keeps the defaults. Not a problem.
+    }
+  }, []);
+
+  /** Saves just the startup profile fields, not the investor being searched. */
+  function rememberProfile(values: BriefRequest) {
+    try {
+      localStorage.setItem(
+        PROFILE_KEY,
+        JSON.stringify({
+          startupSector: values.startupSector,
+          startupStage: values.startupStage,
+          startupDescription: values.startupDescription,
+        }),
+      );
+    } catch {
+      // If storage is blocked we simply do not remember it.
+    }
+  }
+
+  function handleFormChange(values: BriefRequest) {
+    setForm(values);
+    rememberProfile(values);
+  }
 
   async function handleGenerate() {
     // Basic check in the browser before we bother the server.
@@ -67,29 +111,36 @@ export default function HomePage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-14">
       {/* --- Page header --- */}
-      <header className="no-print mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+      <header className="no-print mb-7">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/10">
+          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+          Live web search + Gemini Flash
+        </div>
+
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
           Pre-Meeting Investor Brief
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-          Enter an investor and their firm. The app searches the live web, then uses Google Gemini
-          Flash to write a sourced briefing you can read before the meeting.
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-600 sm:text-base">
+          Enter an investor and their firm. You get a sourced briefing — their recent deals,
+          what they say they invest in, the red flags, and three openers tailored to your
+          startup — in under two minutes.
         </p>
+
         <Link
           href="/components-map"
-          className="mt-3 inline-block text-sm text-blue-700 underline underline-offset-2 hover:text-blue-900"
+          className="mt-4 inline-block text-sm font-medium text-indigo-600 underline decoration-indigo-200 underline-offset-4 hover:decoration-indigo-500"
         >
-          View the components map
+          View the components map →
         </Link>
       </header>
 
       {/* --- The form --- */}
-      <div className="no-print mb-6">
+      <div className="no-print mb-5">
         <BriefForm
           values={form}
-          onChange={setForm}
+          onChange={handleFormChange}
           onSubmit={handleGenerate}
           isLoading={isLoading}
         />
@@ -97,15 +148,15 @@ export default function HomePage() {
 
       {/* --- Error message, if any --- */}
       {error && (
-        <div className="no-print mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
-          <p className="text-sm font-medium text-red-900">Could not generate the brief</p>
-          <p className="mt-1 text-sm leading-relaxed text-red-800">{error}</p>
+        <div className="no-print mb-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 sm:p-5">
+          <p className="text-sm font-semibold text-rose-900">Could not generate the brief</p>
+          <p className="mt-1 text-sm leading-relaxed text-rose-800">{error}</p>
         </div>
       )}
 
       {/* --- Loading state --- */}
       {isLoading && (
-        <div className="no-print mb-6">
+        <div className="no-print mb-5">
           <LoadingProgress />
         </div>
       )}
@@ -120,7 +171,7 @@ export default function HomePage() {
       )}
 
       {/* --- Footer --- */}
-      <footer className="no-print mt-10 border-t border-zinc-200 pt-5 text-xs text-zinc-500">
+      <footer className="no-print mt-12 border-t border-zinc-200 pt-5 text-xs leading-relaxed text-zinc-500">
         Live web search by Tavily · Written by Google Gemini Flash · Always verify facts before
         the meeting.
       </footer>
