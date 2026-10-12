@@ -60,9 +60,11 @@ export async function POST(request: Request) {
     firmName: cleanText(firmName),
     startupSector: cleanText((input.startupSector ?? "").trim()) || "D2C / Consumer brands",
     startupStage: cleanText((input.startupStage ?? "").trim()) || "Seed",
+    // If she left the description empty we say so honestly rather than inventing a
+    // product for her. The sector and stage are still enough to tailor the openers.
     startupDescription:
       cleanText((input.startupDescription ?? "").trim().slice(0, 300)) ||
-      "An early-stage D2C consumer brand.",
+      "Not specified - tailor the talking points using the sector and stage only.",
   };
 
   const today = new Date();

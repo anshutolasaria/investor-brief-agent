@@ -10,15 +10,17 @@ import BriefView from "./components/BriefView";
 import LoadingProgress from "./components/LoadingProgress";
 import type { BriefRequest, BriefResponse } from "@/lib/types";
 
-// The case study says Priya runs a D2C startup but never gives her sector or stage,
-// and the talking points must be tailored to both. So we pre-fill a sensible D2C
-// example that she can edit; it is saved in her browser so she sets it only once.
+// The case study says Priya "runs a D2C startup", so the sector below just restates
+// that. It then requires the talking points to be tailored to her STAGE as well, but
+// never says what her stage is - so "Seed" is an editable starting assumption.
+// The description starts EMPTY on purpose: the case study says nothing about her
+// product, so the app shows an example as placeholder text rather than inventing one.
 const DEFAULT_FORM: BriefRequest = {
   investorName: "",
   firmName: "",
   startupSector: "D2C / Consumer brands",
   startupStage: "Seed",
-  startupDescription: "A direct-to-consumer skincare brand selling online across India.",
+  startupDescription: "",
 };
 
 /** Where the startup profile is kept in the browser. */

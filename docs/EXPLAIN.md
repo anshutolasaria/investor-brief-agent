@@ -248,14 +248,26 @@ and buttons, flattens the cards, and prints the real URL after each link. Zero
 dependencies.
 
 **10. Why does the form ask about Priya's own startup? Isn't the search just the investor?**
-Both are true, and the design reflects that. The case study requires section 4 to be
-*"tailored to Priya's startup's stage and sector"* but never states them, so the app has
-to know them or the openers come out generic - which would defeat the whole section. But
-the case study also says she *"enters an investor's name and firm"*, so those are the only
-two inputs on the search form. Her startup does not change between meetings, so it lives
-in a collapsed strip that shows the current sector and stage, opens with one click, and is
-remembered in `localStorage`. She sets it once, not once per meeting. Nothing is hidden,
-and if storage is blocked the defaults are used.
+Both are true, and the design reflects that.
+
+There is a real gap in the case study. It says Priya *"runs a D2C startup"*, so her sector
+is given. It then requires section 4 to be *"tailored to Priya's startup's **stage** and
+sector"* - but never says what her stage is, and never describes her product. So the app
+cannot satisfy section 4 from the case study alone; something has to supply the stage.
+The three options were: ignore it and produce generic openers (fails the requirement),
+hard-code a guess (invisible and unchangeable), or ask with a sensible starting value.
+The app asks.
+
+Be precise about what is assumed. The sector default just restates "D2C". The stage
+default of "Seed" IS an assumption, clearly editable. The description starts **empty**,
+with the example shown only as placeholder text, because the case study says nothing about
+her product and the app should not invent one; if she leaves it blank the server passes
+"not specified" to the model and the openers are tailored on sector and stage alone.
+
+The case study also says she *"enters an investor's name and firm"* - so those are the only
+two inputs on the search form. Her startup does not change between meetings, so it lives in
+a collapsed strip that shows the current sector and stage, opens with one click, and is
+remembered in `localStorage`. She sets it once, not once per meeting.
 
 ---
 

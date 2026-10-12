@@ -220,12 +220,23 @@ honest, short brief rather than an impressive, invented one.
 
 ### Why the startup profile fields?
 
-The problem statement describes Priya as a D2C founder but never gives her sector,
-stage or product. Section 4 has to be *tailored to her startup's stage and sector*, so
-the app has to know them — otherwise the openers come out generic, which defeats the
-point of the section. Rather than hard-coding guesses, the app asks for three fields and
-pre-fills a sensible D2C example (sector "D2C / Consumer brands", stage "Seed") that
-stays fully editable.
+There is a gap in the problem statement itself, and this is how the app handles it.
+
+The statement says Priya *"runs a D2C startup"* — so her **sector** is given. It then
+requires section 4 to be *"tailored to Priya's startup's **stage** and sector"*, but it
+never says what her stage is, and never describes her product. Those two requirements
+cannot both be met from the statement alone: something has to supply the stage.
+
+There were three options. Ignore it, and the openers come out generic, which defeats the
+point of the section. Hard-code a guess, which is invisible and unchangeable. Or ask,
+with a sensible starting value. The app asks.
+
+Nothing is asserted as fact. The sector defaults to "D2C / Consumer brands", which simply
+restates what the problem statement says. The stage defaults to "Seed" as a common
+starting point for a D2C company, and is clearly an editable assumption. The one-line
+description is left empty with an example shown as placeholder text, because the problem
+statement says nothing at all about her product — so the app does not put words in her
+mouth. Whatever is actually set is always visible in the collapsed strip.
 
 **Where they live in the UI matters too.** The case study says Priya *"enters an
 investor's name and firm"* — that is the search, and those are the only two inputs on the

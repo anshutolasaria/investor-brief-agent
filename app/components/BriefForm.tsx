@@ -109,8 +109,9 @@ export default function BriefForm({ values, onChange, onSubmit, isLoading }: Pro
         {profileOpen && (
           <div className="border-t border-zinc-100 px-5 py-5 sm:px-6">
             <p className="mb-4 text-xs leading-relaxed text-zinc-500">
-              The brief has to tailor its talking points to your sector and stage, so it needs
-              these. You only set them once — they are saved in this browser.
+              The brief tailors its talking points to your sector and stage, so it needs these.
+              The values below are editable starting points, not facts about you — change them
+              to match your startup. You only set them once; they are saved in this browser.
             </p>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -156,6 +157,7 @@ export default function BriefForm({ values, onChange, onSubmit, isLoading }: Pro
                 className={inputClass}
                 value={values.startupDescription}
                 onChange={(e) => setField("startupDescription", e.target.value)}
+                placeholder="e.g. A direct-to-consumer skincare brand selling online across India."
                 maxLength={300}
                 disabled={isLoading}
               />
