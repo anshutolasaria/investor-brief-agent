@@ -62,8 +62,8 @@ flowchart TD
     FE -->|"POST /api/brief<br/>JSON form data"| API
     API -->|"5 search queries at once<br/>2 of them limited to last 90 days"| TAV
     TAV -->|"titles, URLs, published dates,<br/>content snippets"| API
-    API -->|"prompt with today's date,<br/>numbered sources and JSON schema"| GEM
-    GEM -->|"structured JSON brief<br/>validated against the schema"| API
+    API -->|"today's date, numbered sources,<br/>her sector and stage, JSON schema"| GEM
+    GEM -->|"structured JSON brief, talking points<br/>tailored to her sector and stage"| API
     API -->|"brief + numbered sources<br/>+ generation time"| FE
     FE -->|"4 section cards, sources list,<br/>copy and print buttons"| U
 ```

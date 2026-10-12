@@ -19,8 +19,8 @@ const DIAGRAM = `flowchart TD
     FE -->|"POST /api/brief<br/>JSON form data"| API
     API -->|"5 search queries at once<br/>2 of them limited to last 90 days"| TAV
     TAV -->|"titles, URLs, published dates,<br/>content snippets"| API
-    API -->|"prompt with today's date,<br/>numbered sources and JSON schema"| GEM
-    GEM -->|"structured JSON brief<br/>validated against the schema"| API
+    API -->|"today's date, numbered sources,<br/>her sector and stage, JSON schema"| GEM
+    GEM -->|"structured JSON brief, talking points<br/>tailored to her sector and stage"| API
     API -->|"brief + numbered sources<br/>+ generation time"| FE
     FE -->|"4 section cards, sources list,<br/>copy and print buttons"| U`;
 
@@ -64,8 +64,9 @@ export default function ComponentsMapPage() {
             Results are merged, de-duplicated by URL, and numbered into one source list.
           </li>
           <li>
-            That list, today&apos;s date, and the startup profile go to Gemini Flash with a strict
-            JSON schema, so the model must fill a fixed structure and cite real URLs.
+            That list, today&apos;s date, and her sector and stage go to Gemini Flash with a
+            strict JSON schema, so the model must fill a fixed structure, cite each fact by
+            source number, and write the three talking points for her sector and stage.
           </li>
           <li>
             The route returns the brief, the sources and the generation time; the frontend shows
