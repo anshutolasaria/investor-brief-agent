@@ -42,6 +42,26 @@ export function toDateString(date: Date): string {
 }
 
 /**
+ * Removes characters that would break the request we send to Gemini.
+ *
+ * Why this is needed: an emoji is stored as TWO characters (a "surrogate pair").
+ * Cutting a snippet with slice() can land in the middle of a pair and leave one
+ * half behind. A half pair cannot be encoded properly, so the JSON body we send
+ * becomes invalid and Gemini replies "400 Invalid JSON payload". This strips any
+ * half pairs, plus control characters, which are also unsafe inside JSON.
+ */
+export function cleanText(raw: string): string {
+  return raw
+    // A high half with no low half after it.
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, "")
+    // A low half with no high half before it.
+    .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, "")
+    // Control characters, which JSON does not allow raw.
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, " ")
+    .trim();
+}
+
+/**
  * Turns Tavily's published_date into a plain "YYYY-MM-DD" string.
  * Tavily sends dates in the long form "Mon, 28 Sep 2026 21:29:18 GMT", so we
  * cannot just cut the first 10 characters - that would give "Mon, 28 S".
@@ -167,11 +187,12 @@ export async function searchAll(
     seenUrls.add(url);
     sources.push({
       number: sources.length + 1, // numbering starts at 1
-      title,
+      title: cleanText(title),
       url,
       publishedDate: normaliseDate(result.published_date),
-      // Trim long snippets so the prompt we send to Gemini stays a reasonable size.
-      content: (result.content ?? "").slice(0, 1200),
+      // Trim long snippets so the prompt stays a reasonable size, then clean up
+      // any half-emoji the cut may have left behind.
+      content: cleanText((result.content ?? "").slice(0, 1200)),
     });
   }
 

@@ -289,3 +289,14 @@ ask for a source *number* instead, which the app resolves. See section 2, step 6
 
 The made-up-investor test is the important one. It is the direct evidence that the app
 reports what it found rather than what sounds plausible.
+
+**Bug 3 — a split emoji broke the live deployment.**
+The first production deployment returned a 502 on every request, with Google replying
+`400 Invalid JSON payload: syntax error in request body`. The cause was not the API key.
+An emoji is stored as two characters (a "surrogate pair"), and `lib/tavily.ts` trims long
+snippets with `.slice(0, 1200)`. When that cut landed in the middle of an emoji in a news
+headline, it left half a pair behind, which cannot be encoded properly, so the JSON body
+sent to Gemini was invalid. It worked locally only because those particular search results
+had no emoji at the cut point - meaning this would have failed at random during a demo.
+The fix is `cleanText()` in `lib/tavily.ts`, applied to every snippet, every title and
+every form field.

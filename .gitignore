@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Keep the placeholder env file in git, but never the real one.
 !.env.example
+
+.vercel
+.env*

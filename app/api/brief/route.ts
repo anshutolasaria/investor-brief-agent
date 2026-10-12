@@ -3,10 +3,9 @@
 // for a structured brief -> send JSON back to the browser.
 
 import { NextResponse } from "next/server";
-import { searchAll } from "@/lib/tavily";
+import { searchAll, cleanText, toDateString } from "@/lib/tavily";
 import { buildPrompt } from "@/lib/prompt";
 import { generateBrief } from "@/lib/gemini";
-import { toDateString } from "@/lib/tavily";
 import type { BriefRequest, BriefResponse, ErrorResponse } from "@/lib/types";
 
 // Vercel's Hobby plan allows up to 300 seconds. We cap this route at 120s,
@@ -54,12 +53,16 @@ export async function POST(request: Request) {
   }
 
   // Fall back to sensible defaults if the startup profile fields come through empty.
+  // cleanText also strips half-emoji and control characters, which would otherwise
+  // make the request we send to Gemini invalid.
   const cleaned: BriefRequest = {
-    investorName,
-    firmName,
-    startupSector: (input.startupSector ?? "").trim() || "D2C / Consumer brands",
-    startupStage: (input.startupStage ?? "").trim() || "Seed",
-    startupDescription: (input.startupDescription ?? "").trim().slice(0, 300) || "An early-stage D2C consumer brand.",
+    investorName: cleanText(investorName),
+    firmName: cleanText(firmName),
+    startupSector: cleanText((input.startupSector ?? "").trim()) || "D2C / Consumer brands",
+    startupStage: cleanText((input.startupStage ?? "").trim()) || "Seed",
+    startupDescription:
+      cleanText((input.startupDescription ?? "").trim().slice(0, 300)) ||
+      "An early-stage D2C consumer brand.",
   };
 
   const today = new Date();
