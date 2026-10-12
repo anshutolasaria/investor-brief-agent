@@ -4,7 +4,6 @@
 // either a loading state, an error, or the finished brief.
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import BriefForm from "./components/BriefForm";
 import BriefView from "./components/BriefView";
 import LoadingProgress from "./components/LoadingProgress";
@@ -129,13 +128,6 @@ export default function HomePage() {
           what they say they invest in, the red flags, and three openers tailored to your
           startup — in under two minutes.
         </p>
-
-        <Link
-          href="/components-map"
-          className="mt-4 inline-block text-sm font-medium text-indigo-600 underline decoration-indigo-200 underline-offset-4 hover:decoration-indigo-500"
-        >
-          View the components map →
-        </Link>
       </header>
 
       {/* --- The form --- */}
