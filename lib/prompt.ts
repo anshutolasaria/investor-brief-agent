@@ -59,13 +59,20 @@ RULES YOU MUST FOLLOW
 6. Do NOT write bracket markers like [3] or [10, 12] inside any piece of text. The app
    adds the source link itself from the "sourceNumber" field. Text fields such as
    "summary", "sectors" and "point" must read as clean prose with no citation markers.
-7. The three talking points must connect this investor's ACTUAL stated interests
+7. For "investmentThesis", capture what they PUBLICLY STATE they invest in: the sectors
+   and stages they name, and the beliefs they express in their own interviews, essays,
+   blog posts or podcasts.
+8. For "contextAndRedFlags", look specifically for: sectors this investor or firm has
+   moved away from or stopped backing, notable controversies, and pivots or failures
+   among their portfolio companies. If the sources show none of these, say so plainly in
+   "note" and leave "items" empty rather than padding it with neutral facts.
+9. The three talking points must connect this investor's ACTUAL stated interests
    (from the sources) to Priya's sector (${input.startupSector}) and stage
    (${input.startupStage}). Each should be something she can say out loud in the first
    two minutes of the meeting.
-8. Be honest about thin data. If this investor is not well covered by the sources, say so
+10. Be honest about thin data. If this investor is not well covered by the sources, say so
    plainly in "confidenceNote" and set "dataConfidence" to "low".
-9. Write in clear, plain English. No marketing language.
+11. Write in clear, plain English. No marketing language.
 
 NUMBERED SOURCES (live web and news results fetched today)
 ${sources.length > 0 ? formatSources(sources) : "(No sources were found.)"}

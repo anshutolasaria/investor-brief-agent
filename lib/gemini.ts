@@ -49,6 +49,7 @@ const BRIEF_SCHEMA = {
     },
     investmentThesis: {
       type: "object",
+      description: "What this investor publicly states they invest in.",
       properties: {
         sectors: { type: "array", items: { type: "string" } },
         stages: { type: "array", items: { type: "string" } },
@@ -71,8 +72,14 @@ const BRIEF_SCHEMA = {
     },
     contextAndRedFlags: {
       type: "object",
+      description:
+        "Sectors they have moved away from, notable controversies, and pivots or failures in their portfolio.",
       properties: {
-        note: { type: "string", description: "One line; say plainly if nothing notable was found." },
+        note: {
+          type: "string",
+          description:
+            "One line summarising the context. Say plainly if nothing notable was found.",
+        },
         items: {
           type: "array",
           items: {
