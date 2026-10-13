@@ -145,6 +145,61 @@ async function runOneSearch(plan: SearchPlan, apiKey: string, today: Date): Prom
 }
 
 /**
+ * Works out which words a result must mention to count as being about this investor.
+ *
+ * This matters more than it sounds. Searching for "Fred Wilson" also returns pages
+ * about the word "Fred" on its own - a supermarket chain, a clothing shop, the
+ * Federal Reserve's economics database. Those pages are useless to the brief, and
+ * several of them are dead or block visitors, so a reader clicking the link in the
+ * finished brief gets an error page.
+ */
+function buildRelevanceWords(investorName: string, firmName: string): string[] {
+  const words: string[] = [];
+
+  const investor = investorName.trim().toLowerCase();
+  if (investor) {
+    words.push(investor);
+    // The surname on its own, since many articles say "Wilson" after the first mention.
+    const surname = investor.split(/\s+/).pop() ?? "";
+    if (surname.length >= 4) words.push(surname);
+  }
+
+  const firm = firmName.trim().toLowerCase();
+  if (firm) {
+    words.push(firm);
+    // "Union Square Ventures" should also match an article that says "Union Square".
+    const withoutGenericTail = firm
+      .replace(/\b(ventures?|capital|partners?|funds?|vc|llp|llc|inc|group)\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (withoutGenericTail.length >= 4) words.push(withoutGenericTail);
+  }
+
+  return words;
+}
+
+/**
+ * Drops results that never mention the investor or the firm.
+ * If that would leave nothing at all, we keep the original list instead, so a thin
+ * search still produces a brief rather than a "nothing found" error.
+ */
+function keepRelevant(
+  results: Omit<Source, "number">[],
+  investorName: string,
+  firmName: string,
+): Omit<Source, "number">[] {
+  const words = buildRelevanceWords(investorName, firmName);
+  if (words.length === 0) return results;
+
+  const relevant = results.filter((result) => {
+    const haystack = `${result.title} ${result.content}`.toLowerCase();
+    return words.some((word) => haystack.includes(word));
+  });
+
+  return relevant.length > 0 ? relevant : results;
+}
+
+/**
  * Runs all 5 searches IN PARALLEL, then merges them into one numbered,
  * de-duplicated source list.
  * If every single search fails we throw, so the user sees a real error
@@ -175,9 +230,10 @@ export async function searchAll(
     throw new Error(settled[0].error ?? "All Tavily searches failed.");
   }
 
-  // Flatten, drop junk, and de-duplicate by URL.
+  // Flatten, drop junk, and de-duplicate by URL. Numbering comes later, because
+  // irrelevant results are removed first and the numbers must stay 1, 2, 3...
   const seenUrls = new Set<string>();
-  const sources: Source[] = [];
+  const collected: Omit<Source, "number">[] = [];
 
   for (const result of settled.flatMap((s) => s.results)) {
     const url = result.url?.trim();
@@ -185,8 +241,7 @@ export async function searchAll(
     if (!url || !title || seenUrls.has(url)) continue;
 
     seenUrls.add(url);
-    sources.push({
-      number: sources.length + 1, // numbering starts at 1
+    collected.push({
       title: cleanText(title),
       url,
       publishedDate: normaliseDate(result.published_date),
@@ -196,5 +251,7 @@ export async function searchAll(
     });
   }
 
-  return sources;
+  // Keep only results that actually mention this investor or firm, then number them.
+  const relevant = keepRelevant(collected, investorName, firmName);
+  return relevant.map((source, index) => ({ ...source, number: index + 1 }));
 }

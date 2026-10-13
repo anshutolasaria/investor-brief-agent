@@ -31,7 +31,9 @@ function briefToText(data: BriefResponse, investorName: string, firmName: string
   lines.push("1. RECENT PORTFOLIO ACTIVITY (last 90 days)");
   lines.push(brief.recentActivity.note);
   for (const item of brief.recentActivity.items) {
-    lines.push(`- [${item.date}] ${item.headline}: ${item.description} (${urlFor(item.sourceNumber)})`);
+    lines.push(`- ${item.date} — ${item.headline}`);
+    lines.push(`  ${item.description}`);
+    lines.push(`  ${urlFor(item.sourceNumber)}`);
   }
   lines.push("");
 
@@ -39,14 +41,16 @@ function briefToText(data: BriefResponse, investorName: string, firmName: string
   lines.push(`Sectors: ${brief.investmentThesis.sectors.join(", ") || "not stated in sources"}`);
   lines.push(`Stages: ${brief.investmentThesis.stages.join(", ") || "not stated in sources"}`);
   for (const belief of brief.investmentThesis.beliefs) {
-    lines.push(`- ${belief.point} (${urlFor(belief.sourceNumber)})`);
+    lines.push(`- ${belief.point}`);
+    lines.push(`  ${urlFor(belief.sourceNumber)}`);
   }
   lines.push("");
 
   lines.push("3. CONTEXT & RED FLAGS");
   lines.push(brief.contextAndRedFlags.note);
   for (const item of brief.contextAndRedFlags.items) {
-    lines.push(`- ${item.point} (${urlFor(item.sourceNumber)})`);
+    lines.push(`- ${item.point}`);
+    lines.push(`  ${urlFor(item.sourceNumber)}`);
   }
   lines.push("");
 
@@ -62,8 +66,11 @@ function briefToText(data: BriefResponse, investorName: string, firmName: string
 
   lines.push("SOURCES");
   for (const source of sources) {
-    const date = source.publishedDate ? ` (${source.publishedDate})` : "";
-    lines.push(`[${source.number}] ${source.title}${date} - ${source.url}`);
+    const date = source.publishedDate ? ` — ${source.publishedDate}` : "";
+    lines.push(`[${source.number}] ${source.title}${date}`);
+    // The address goes on its own line with nothing after it, so that pasting into
+    // chat apps, email or Word turns the whole thing into a working link.
+    lines.push(`    ${source.url}`);
   }
 
   return lines.join("\n");
