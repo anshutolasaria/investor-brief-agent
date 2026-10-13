@@ -144,10 +144,28 @@ export default function BriefView({ data, investorName, firmName }: Props) {
                 <button type="button" onClick={handleCopy} className={buttonClass}>
                   {copyState === "copied" ? "Copied!" : "Copy brief"}
                 </button>
-                <button type="button" onClick={handlePrint} className={buttonClass}>
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className={buttonClass}
+                  title={'In the print dialog choose "Save as PDF". "Microsoft Print to PDF" flattens the page, which loses the links.'}
+                >
                   Download as PDF
                 </button>
               </div>
+
+              {/*
+                The destination chosen in the print dialog decides whether the saved PDF
+                keeps working links. The browser's own "Save as PDF" keeps them. The
+                Windows "Microsoft Print to PDF" driver only receives a picture of the
+                page, so every link is flattened. One line of guidance saves the user
+                from a PDF whose sources cannot be opened.
+              */}
+              <p className="max-w-[15rem] text-right text-xs leading-relaxed text-zinc-500">
+                Choose <span className="font-medium text-zinc-700">Save as PDF</span> in the
+                print dialog to keep links clickable.
+              </p>
+
               {copyState === "failed" && (
                 <p className="text-xs text-rose-600">
                   Copying was blocked. Select the text and press Ctrl+C.
