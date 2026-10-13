@@ -44,12 +44,32 @@ body {
     page-break-inside: avoid;
   }
 
-  /* Show the real URL next to each link, since a printed link is not clickable. */
+  /*
+    Links in a PDF.
+
+    Two things are needed, because browsers differ. Chrome and Edge keep a real
+    clickable link when you choose "Save as PDF"; some other browsers flatten the
+    page and lose it. So we keep the <a> element (clickable where supported) AND
+    print the full address as readable text, which always works - the reader can
+    copy it or type it. Keeping both means the PDF is never a dead end.
+  */
+  a {
+    color: #1d4ed8 !important;
+    text-decoration: underline !important;
+  }
+
   .print-url::after {
-    content: " (" attr(href) ")";
-    font-size: 10px;
-    color: #52525b;
+    content: " " attr(href);
+    font-size: 11px;
+    color: #1e40af;
     word-break: break-all;
+    text-decoration: none;
+  }
+
+  /* Keep a source and its address together on one page. */
+  .print-url {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   @page {

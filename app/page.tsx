@@ -3,7 +3,7 @@
 // The home page. It holds the form values, calls POST /api/brief, and then shows
 // either a loading state, an error, or the finished brief.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BriefForm from "./components/BriefForm";
 import BriefView from "./components/BriefView";
 import LoadingProgress from "./components/LoadingProgress";
@@ -24,6 +24,13 @@ const DEFAULT_FORM: BriefRequest = {
 
 /** Where the startup profile is kept in the browser. */
 const PROFILE_KEY = "investor-brief:startup-profile";
+
+/**
+ * Where the last brief is kept, so that clicking a source link and pressing Back
+ * brings you straight back to the brief instead of an empty form.
+ * sessionStorage, not localStorage: it belongs to this tab and this sitting.
+ */
+const RESULT_KEY = "investor-brief:last-result";
 
 /** One-click examples, so the app is not a blank box on first visit. */
 const EXAMPLES = [
@@ -85,6 +92,80 @@ export default function HomePage() {
     }
   }, []);
 
+  // How far down the page we should scroll once the restored brief has been drawn.
+  const pendingScroll = useRef<number | null>(null);
+
+  // Bring back the last brief when the page is reopened or navigated back to.
+  // Without this, following a source link and pressing Back would mean searching again.
+  useEffect(() => {
+    // Turn off the browser's own scroll restoring; it runs before the brief exists
+    // and would fight the one below.
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+    try {
+      const saved = sessionStorage.getItem(RESULT_KEY);
+      if (!saved) return;
+      const { data, shownFor: who, scrollY } = JSON.parse(saved);
+      pendingScroll.current = scrollY ?? 0;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring the last brief on mount
+      setResult(data);
+      setShownFor(who);
+    } catch {
+      // A browser with storage blocked just starts fresh.
+    }
+  }, []);
+
+  // Put the page back where it was, but only once the brief is actually on screen.
+  // The page is short at first and grows as the brief renders, so a single scroll
+  // would land in the wrong place. We keep nudging it for a few frames until it sticks.
+  useEffect(() => {
+    const target = pendingScroll.current;
+    if (!result || target === null) return;
+    pendingScroll.current = null;
+
+    // Keep nudging for up to three seconds. A long brief with many sources takes a
+    // moment to lay out, and until it does the page is too short to scroll that far.
+    const giveUpAt = Date.now() + 3000;
+    const timer = setInterval(() => {
+      window.scrollTo(0, target);
+      const arrived = Math.abs(window.scrollY - target) <= 2;
+      if (arrived || Date.now() > giveUpAt) clearInterval(timer);
+    }, 50);
+
+    return () => clearInterval(timer);
+  }, [result]);
+
+  // Remember how far down the page we were, just before leaving it.
+  useEffect(() => {
+    function rememberScroll() {
+      try {
+        const saved = sessionStorage.getItem(RESULT_KEY);
+        if (!saved) return;
+        const parsed = JSON.parse(saved);
+        parsed.scrollY = window.scrollY;
+        sessionStorage.setItem(RESULT_KEY, JSON.stringify(parsed));
+      } catch {
+        // Nothing to do if storage is unavailable.
+      }
+    }
+
+    // "pagehide" fires when leaving the page, including when following a link.
+    window.addEventListener("pagehide", rememberScroll);
+    return () => window.removeEventListener("pagehide", rememberScroll);
+  }, []);
+
+  /** Clears the brief on screen and forgets the saved copy. */
+  function clearBrief() {
+    setResult(null);
+    setError(null);
+    try {
+      sessionStorage.removeItem(RESULT_KEY);
+    } catch {
+      // Ignore: the brief is cleared on screen either way.
+    }
+    window.scrollTo(0, 0);
+  }
+
   /** Saves just the startup profile fields, not the investor being searched. */
   function rememberProfile(values: BriefRequest) {
     try {
@@ -138,8 +219,16 @@ export default function HomePage() {
         return;
       }
 
+      const who = { investorName: form.investorName, firmName: form.firmName };
       setResult(data as BriefResponse);
-      setShownFor({ investorName: form.investorName, firmName: form.firmName });
+      setShownFor(who);
+
+      // Keep a copy for this tab, so Back returns to the brief rather than a blank form.
+      try {
+        sessionStorage.setItem(RESULT_KEY, JSON.stringify({ data, shownFor: who, scrollY: 0 }));
+      } catch {
+        // If storage is blocked the brief still shows; it just will not survive Back.
+      }
     } catch {
       // This runs if the network call itself failed (offline, server down, timeout).
       setError("Could not reach the server. Check your connection and try again.");
@@ -224,6 +313,19 @@ export default function HomePage() {
       {isLoading && (
         <div className="no-print mb-5">
           <LoadingProgress />
+        </div>
+      )}
+
+      {/* --- A way to put the brief away and start a new search --- */}
+      {result && !isLoading && (
+        <div className="no-print mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={clearBrief}
+            className="text-xs font-medium text-zinc-500 underline underline-offset-4 transition hover:text-zinc-800"
+          >
+            Clear this brief
+          </button>
         </div>
       )}
 
